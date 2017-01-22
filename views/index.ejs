@@ -1,0 +1,51 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="/public/plugins/jquery-3.1.1.min.js"></script>        
+        <link href="/public/plugins/bootstrap-3.3.7-dist/css/bootstrap.css" rel="stylesheet" type="text/css" />
+        <script src="/public/plugins/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+        <script src="/public/plugins/moment-with-locales.js"></script>
+
+        <script src="/public/index.js"></script>
+        <link href="/public/index.css" rel="stylesheet" type="text/css" />
+    </head>
+    <body>
+        <div class="header">            
+            <button class="btn btn-default" id="previous"><span class="glyphicon glyphicon-chevron-left"></span> Dia</button>
+            <input class="form-control" id="date" type="date">
+            <button id="update" class="btn btn-default pull-right"><span class="glyphicon glyphicon-refresh"></span>  Atualizar</button>
+            <button class="btn btn-default" id="next">Dia <span class="glyphicon glyphicon-chevron-right"></span></button>
+            <div class="info">
+                <span class="label label-danger" id="available-space"></span>
+                <span class="label label-warning" id="total-records"></span>
+                <span class="label label-primary" id="total-hours"></span>
+                <span class="label label-info" id="automaticallyRecord"></span>
+                <span class="label label-default" id="server-date"></span>
+            </div>            
+        </div>
+
+        <img id="stream" style="display: none;">
+
+        <div class="content">
+            
+        </div>
+
+        <div class="bottom">            
+            <div class="bottom-message"></div>
+            <div class="buttons">
+                <button id="record" class="btn btn-danger"><span class="glyphicon glyphicon-record"></span> <span>Gravar</span></button>
+                <button id="stop" class="btn btn-warning"><span class="glyphicon glyphicon-stop"></span> Pausar</button>            
+
+                <button class="btn btn-info btn-center" id="btn-stream"><span class="glyphicon glyphicon-camera"></span>  Câmera ao vivo</button>                
+                <button id="shutdown" class="btn btn-danger pull-right"><span class="glyphicon glyphicon-off"></span> Desligar</button>            
+            </div>            
+        </div>
+
+        <template id="item">
+            <div class="item">
+                <h1></h1>
+                <div class="video"></div>
+            </div>
+        </template>
+    </body>
+</html>

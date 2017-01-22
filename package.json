@@ -1,0 +1,24 @@
+{
+  "name": "RaspiWebCam",
+  "version": "1.0.0",
+  "description": "",
+  "main": "cluster.js",
+  "dependencies": {
+    "body-parser": "^1.16.0",
+    "diskspace": "^1.0.3",
+    "ejs": "^2.5.5",
+    "express": "^4.14.0",
+    "moment": "^2.17.1",
+    "properties": "^1.2.1",
+    "properties-reader": "0.0.15",
+    "raspicam": "^0.2.13",
+    "shelljs": "^0.7.6",
+    "socket.io": "^1.7.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Lucas Micheloni Antevere",
+  "license": "MIT License"
+}
