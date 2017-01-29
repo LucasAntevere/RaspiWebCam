@@ -4,6 +4,7 @@ var raspicam = require("raspicam");
 var moment = require("moment");
 var diskspace = require("diskspace");
 var path = require("path");
+var configManager = require("./configManager");
 
 var _instance;
 
@@ -20,66 +21,56 @@ var RecordManager = function() {
     this.camera = null;
     this.isRecording = false;
     this.timeFixed = false;
-    this.configFileName = "config.json";
 
-    this.ops = this.readConfigFile() || {};
     this.init();
 };
 
 RecordManager.prototype = {
     init: function(){
+		this.log("RecordManager.Init()");
+		
         this.checkTempDirectory();
         this.checkEmptyDirectories();
         this.startAutomatically();      
     },
-    getConfigFilePath: function(){
-        return path.join(__dirname, this.configFileName);
-    },
-    writeCondigFile: function(config){
-        var configPath = this.getConfigFilePath();
-         if(fs.existsSync(configPath)){             
-            fs.writeFileSync(configPath, JSON.stringify(config));       
-
-            this.ops = this.readConfigFile();
-
-            return true;
-        }else{
-            return false;
-        }        
-    },
-    readConfigFile: function(){
-        var configPath = this.getConfigFilePath();
-        if(fs.existsSync(configPath)){
-            var config = fs.readFileSync(configPath);
-            return JSON.parse(config);
-        }else{
-            return null;
-        }        
-    },    
     checkEmptyDirectories: function(){
-        var dirs = fs.readdirSync(this.ops.recordPath);
+		this.log("Início da checagem de diretórios vazios.");
+		
+        var dirs = fs.readdirSync(configManager.get("recordPath"));
 
         for (i = 0; i < dirs.length; i++){
-            if(dirs[i] == this.ops.tempFolderName) continue;
+            if(dirs[i] == configManager.get("tempFolderName")) continue;
 
-            var files = fs.readdirSync(path.join(this.ops.recordPath, dirs[i])); 
-            if(!files.length) fs.rmdirSync(path.join(this.ops.recordPath, dirs[i]));  
+            var files = fs.readdirSync(path.join(configManager.get("recordPath"), dirs[i])); 
+            if(!files.length) fs.rmdirSync(path.join(configManager.get("recordPath"), dirs[i]));  
         }
+        
+        this.log("Fim da checagem de diretórios vazios.");
     },
     checkTempDirectory: function(){
+		this.log("Início da checagem do diretório temporário.");
+		
         var dir = this.getTempDir();
         var files = fs.readdirSync(dir);
 
         for (i = 0; i < files.length; i ++){
             this.moveToCorrectDir(path.join(dir, files[i]));
         }
+        
+        this.log("Fim da checagem do diretório temporário.");
     },
     canAutomaticallyRecord: function(){
-        return this.ops.autoRecord && !this.stopManually && this.timeFixed;
+        return configManager.get("autoRecord") && !this.stopManually && this.timeFixed;
     },
     startAutomatically: function(){
-        if (this.canAutomaticallyRecord())        
-            this.record();  
+		this.log("Início da verificação para iniciar a auto gravação.");
+        if (this.canAutomaticallyRecord()) {
+			this.log("Auto gravação iniciada.");
+			setTimeout(this.record.bind(this), 1000);              
+		}
+        else
+			this.log("Auto gravação não iniciada.");
+		this.log("Fim da verificação para iniciar a auto gravação.");
     },
     canRecord: function(){
         return !this.isRecording;
@@ -87,20 +78,25 @@ RecordManager.prototype = {
     record: function(){
         if (this.isRecording || this.isStreaming) return false;
         
+        var recordPath = path.join(this.getTempDir(), this.getTempFileName());
+                
         this.camera =  new raspicam({
             mode: "video",
-            output: path.join(this.getTempDir(), this.getTempFileName()),
-            w: this.ops.width,
-            h: this.ops.height,
-            b: this.ops.bitrate,
-            fps: this.ops.framerate,
-            t: this.ops.videoLimitSeconds,
-            nopreview: this.ops.nopreview,
-            vstab: this.ops.vstab
+            output: recordPath,
+            t: configManager.get("videoLimitSeconds") * 1000,
+            w: configManager.get("width"),
+            h: configManager.get("height"),
+            bitrate: configManager.get("bitrate"),
+            framerate: configManager.get("framerate")
+            
+    //        nopreview: this.ops.nopreview,
+  //          vstab: this.ops.vstab,
+//            log: __dirname
         });
         
         this.setCameraEvents(this.camera);
 
+		this.log("Início da gravação (" + recordPath + ").");
         var started = this.camera.start();
 
         this.stopManually = false;
@@ -135,8 +131,34 @@ RecordManager.prototype = {
                 obj.endDate = new Date(obj.endDate);
             else
                 obj.endDate = new Date();
+                
             
-            fs.rename(filePath, path.join(this.getDir(obj.startDate), this.getFileName(obj.startDate, obj.endDate)));
+            var newFileDir = this.getDir(obj.startDate);
+            
+            this.createIfNotExistsDir(newFileDir);
+            
+            var newFilePath = path.join(newFileDir, this.getFileName(obj.startDate, obj.endDate));
+            
+            if(path.extname(filePath) == ".h264"){
+				var mp4Command  ="MP4Box -add " + filePath + " " + newFilePath;
+				  
+				this.log("Início da conversão do arquivo. (" + mp4Command + ")");
+				shell.exec(mp4Command, { silent: false }, 
+					function(code, stdout, stderr){
+						if (stdout.toLowerCase().indexOf("error") != -1){
+							this.log("Erro ao converter o arquivo: " + filePath);
+							this.log(stdout);
+							this.log(stderr);	
+						}else{
+							this.log("Fim da conversão do arquivo (" + filePath + ") para (" + newFilePath + ")");
+							fs.unlinkSync(filePath);	
+							
+							this.updateStats(newFilePath);
+						}
+				}.bind(this));
+			}else{                        
+				fs.rename(filePath, newFilePath);
+			}
     },
     onSaveRecord: function(err, timestamp, filename){
         if(!fs.existsSync(filename)) return;
@@ -147,6 +169,7 @@ RecordManager.prototype = {
         
         this.isRecording = false;
 
+		this.log("Fim da gravação (" + filename + ").");
         this.startAutomatically();
     },
     getRecords: function(date){
@@ -175,14 +198,14 @@ RecordManager.prototype = {
     getDir: function(date){
         if(!date) return null;
         
-        var dir = path.join(this.ops.recordPath, moment(date).format(this.ops.folderDateFormat));
+        var dir = path.join(configManager.get("recordPath"), moment(date).format(configManager.get("folderDateFormat")));
 
         this.createIfNotExistsDir(dir);
 
         return dir;
     },
     getTempDir: function(){
-        var dir = path.join(this.ops.recordPath,  this.ops.tempFolderName);
+        var dir = path.join(configManager.get("recordPath"),  configManager.get("tempFolderName"));
 
         this.createIfNotExistsDir(dir);
 
@@ -192,15 +215,15 @@ RecordManager.prototype = {
         return this.getFileName(new Date(), null);
     },
     getFileName: function(startDate, endDate){
-        return this.dateToString(startDate) + ";" + this.dateToString(endDate) + this.ops.extension;
+        return this.dateToString(startDate) + "__" + this.dateToString(endDate) + configManager.get("extension");
 
         return (JSON.stringify({
             startDate: this.dateToString(startDate),
             endDate: this.dateToString(endDate)
-        }) + this.ops.extension).replace(/:/g, ";;").replace(/"/g, "'");
+        }) + configManager.get("extension")).replace(/:/g, ";;").replace(/"/g, "'");
     },
     readFileName: function(fileName){
-        var parts = path.basename(fileName, path.extname(fileName)).replace(/;;/g, ":").replace(/'/g, "\"").split(";");
+        var parts = path.basename(fileName, path.extname(fileName)).split("__");
 
         return {
             startDate: parts.length >= 1 && parts[0] ? this.stringToDate( parts[0]) : null,
@@ -222,18 +245,18 @@ RecordManager.prototype = {
     },
     dateToString: function(date){
         if (!date) return "";
-        return moment(date).format(this.ops.fileDateFormat);
+        return moment(date).format(configManager.get("fileDateFormat"));
     },
     stringToDate: function(string){
-        return moment(string, this.ops.fileDateFormat).toDate();
+        return moment(string, configManager.get("fileDateFormat")).toDate();
     },
     getAllRecords: function(){
         var files = [];
 
-        var dirs = fs.readdirSync(this.ops.recordPath);
+        var dirs = fs.readdirSync(configManager.get("recordPath"));
 
         for (i = 0; i < dirs.length; i++){
-            files = files.concat(fs.readdirSync(path.join(this.ops.recordPath, dirs[i])));    
+            files = files.concat(fs.readdirSync(path.join(configManager.get("recordPath"), dirs[i])));    
         }
 
         var json = [];
@@ -244,38 +267,87 @@ RecordManager.prototype = {
         return json;
     },
     getSpaceInfo: function(callback){
-        diskspace.check(this.ops.recordPartition, function(err, total, free, status){
+        diskspace.check(configManager.get("recordPartition"), function(err, total, free, status){			
             callback(total, free);
         });        
     },
     setTimeFixed: function(){
         this.timeFixed = true;
     },
-    stream: function(stream){
-        if(this.isRecording) return false;
+    stream: function(stream, cb){
+        if(this.isRecording) return cb(false);
 
         if (stream){
-            if(this.isStreaming) return true;
+            if(this.isStreaming) return cb(true);
             
             this.isStreaming = true;
 
-            this.camera =  new raspicam({
+		    this.camera =  new raspicam({
                 mode: "photo",
                 output: path.join(__dirname, "public", "stream.jpg"),
                 w: 640,
                 h: 480,
-                q: 100            
+                q: 30,
+                t: 1,
+                nopreview: false
             });
         
-            var result = this.camera.start();
-            this.isStreaming = false;
-            this.camera = null;
-            return result;
+			this.camera.on("read", function(){										
+					setTimeout(function(){
+						this.isStreaming = false;
+						this.camera = null;
+						cb(true);
+					}.bind(this), 1000);					
+			}.bind(this));
+			
+			this.camera.on("stop", function(){															
+					this.isStreaming = false;
+					this.camera = null;
+					cb(false);					
+			}.bind(this));
+        
+            var result = this.camera.start();            
+            if (!result)
+				cb(result);
         }else{
             this.isStreaming = false;
-            return true;
+            return cb(true);
         }
-    }
+    },
+    log: function(message){
+		var logPath = path.join(configManager.get("logDir"), "log.txt");
+		this.createIfNotExistsDir(configManager.get("logDir"));
+
+		fs.appendFileSync(logPath, "\n" + moment().format("YYYY-MM-DD HH:mm:ss") + " | " + message);		
+	},
+	updateStats: function(filePath){
+		var fileName = this.readFileName(filePath);
+		var stats = this.getStats();
+				
+		var start = fileName.startDate.getTime();
+		var end = fileName.endDate.getTime();
+
+		stats.totalHours += Math.abs((((end - start)  / (1000*60*60)) % 24));
+		stats.totalRecords += 1;
+		
+		fs.writeFileSync(this.getStatsPath(), JSON.stringify(stats));		
+	},
+	getStatsPath: function(){
+		return path.join(configManager.get("logDir"), "stats.json");
+	},
+	getStats: function(){ 
+		var statsPath = this.getStatsPath();
+		this.createIfNotExistsDir(configManager.get("logDir"));
+		
+		if(!fs.existsSync(statsPath)){
+            fs.writeFileSync(statsPath, JSON.stringify({
+					totalHours: 0,
+					totalRecords: 0
+			}));            
+		}
+		
+		return JSON.parse(fs.readFileSync(statsPath));
+	}
 };
 
 module.exports = getInstance;

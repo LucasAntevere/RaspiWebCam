@@ -8,6 +8,7 @@ module.exports = function() {
     var path = require("path");
     var express = require('express')
     var app = express()
+    var configManager = require("./configManager");
 
     app.use(bodyParser.json()); 
     app.use(bodyParser.urlencoded({ extended: true })); 
@@ -33,8 +34,8 @@ module.exports = function() {
 
         fs.stat(movieFile, (err, stats) => {
             if (err) {
-            console.log(err);
-            return res.status(404).end('<h1>Movie Not found</h1>');
+				console.log(err);
+				return res.status(404).end('<h1>Movie Not found</h1>');
             }
             
             const { range } = req.headers;
@@ -89,32 +90,26 @@ module.exports = function() {
     });
 
     app.get("/stats", function(req, res){
-        var totalRecords = recordManager.getAllRecords();    
         var automaticallyRecord = recordManager.canAutomaticallyRecord();
 
-        var totalHours = 0;
-
-        for (i = 0; i < totalRecords.length; i++){
-            var start = totalRecords[i].startDate.getTime();
-            var end = totalRecords[i].endDate.getTime();
-
-            totalHours += Math.abs((((end - start)  / (1000*60*60)) % 24));
-        }
+		var stats = recordManager.getStats();
 
         recordManager.getSpaceInfo(function(total, free){
             var freeGb = (free/ 1024 / 1024 / 1024);
             var totalGb = (total/ 1024 / 1024 / 1024);
 
+			var availableHours = freeGb / ((totalGb - freeGb) / stats.totalHours);
+
             res.json(new result(true, "", {
-                totalRecords: totalRecords.length,
-                totalHours: totalHours,
-                availableHours: freeGb / ((totalGb - freeGb) / totalHours),
+                totalRecords: stats.totalRecords,
+                totalHours: parseInt(stats.totalHours, 10) + ":" + ((Math.abs(parseInt(stats.totalHours, 10) - stats.totalHours)) * 60).toFixed(0),
+                availableHours: parseInt(availableHours, 10) + ":" + ((Math.abs(parseInt(availableHours, 10) - availableHours)) * 60).toFixed(0),
                 freeSpaceGb: freeGb,
                 totalSpaceGb: totalGb,
                 automaticallyRecord: automaticallyRecord
             }));
         });
-    });
+    });	
 
     app.post("/shutdown", function(req, res){
         recordManager.stop();
@@ -129,8 +124,8 @@ module.exports = function() {
         res.render("config");
     })
 
-    app.get("/getConfigFile", function(req, res){
-        var config = recordManager.readConfigFile();
+    app.get("/getConfigFile", function(req, res){		
+        var config = configManager.readConfigFile();
         res.json(new result(true, "", config));
     });
 
@@ -138,7 +133,7 @@ module.exports = function() {
         var config = req.body.config;
 
         if(config){
-            recordManager.writeCondigFile(config);
+            configManager.writeConfigFile(config);
             res.json(new result(true, "", config));
         }else{
             res.json(new result(false, "Novo arquivo de configuração inválido.", config));
@@ -147,7 +142,7 @@ module.exports = function() {
 
     app.post("/stream", function(req, res){
         var stream = req.body.stream;
-
+/*
         if (stream){
             fs.rename(path.join(__dirname, "public", "stream.jpg"), path.join(__dirname, "public", "stream2.jpg"), function(){
                 fs.rename(path.join(__dirname, "public", "stream1.jpg"), path.join(__dirname, "public", "stream.jpg"), function(){
@@ -161,8 +156,11 @@ module.exports = function() {
         }else{
 
         }
-        return;
-        res.json(new result(recordManager.stream(stream), ""));        
+        return;*/
+        
+        recordManager.stream(stream, function(success){
+			res.json(new result(success, ""));        
+		});
     });
 
     app.listen(3000, function () {

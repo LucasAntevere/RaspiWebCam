@@ -70,7 +70,7 @@ App.prototype = {
 
         this.getStatus();
         this.getStats();
-        setInterval(this.getStatus.bind(this), 5000);
+        setInterval(this.getStatus.bind(this), 1000);
     },
     onStreamClick: function(){
         if(this.isStreaming){
@@ -169,7 +169,7 @@ App.prototype = {
         this.html.$serverDate.text(moment(status.date).format("DD/MM/YY HH:mm:ss"));
     },
     updateStats: function(stats){
-        this.html.$totalHours.text(stats.totalHours.toFixed(2) + "/" + stats.availableHours.toFixed(2) + " horas");
+        this.html.$totalHours.text(stats.totalHours/*.toFixed(2)*/ + "/" + stats.availableHours/*.toFixed(2)*/ + " horas");
         this.html.$totalRecords.text(stats.totalRecords + " gravações");
         this.html.$availableSpace.text((stats.totalSpaceGb - stats.freeSpaceGb).toFixed(2) + "/" + stats.totalSpaceGb.toFixed(2) + " Gb");
         this.html.$automaticallyRecord.text("Gravação Automática ");                
@@ -184,6 +184,26 @@ App.prototype = {
             method: "POST",
             url: "/record"
         }).done(function(result){
+			if (result.success){
+				
+			}else{
+				this.setMessage(result.messages);
+			}
+            console.debug(result);
+        }.bind(this)).fail(function(){
+
+        });
+    },
+    stop: function(){
+        $.ajax({
+            method: "POST",
+            url: "/stop"
+        }).done(function(result){
+			if (result.success){
+				
+			}else{
+				this.setMessage(result.messages);
+			}
             console.debug(result);
         }.bind(this)).fail(function(){
 
