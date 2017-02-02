@@ -1,4 +1,4 @@
-var shell = require("sheeljs");
+var shell = require("shelljs");
 var fs = require("fs");
 var configManager = require("./configManager");
 var path = require("path");
@@ -11,9 +11,10 @@ function TemperatureManager(){
 TemperatureManager.prototype = {
 	start: function(){
 		setInterval(this.measure.bind(this), this.seconds * 100);
+		this.measure();
 	},
 	measure: function(){
-		shell.exec("/opt/vc/bin vcgencmd measuretemp", { silent: false }, function(code, stdout, stderr){
+		shell.exec("/opt/vc/bin/vcgencmd measure_temp", { silent: false }, function(code, stdout, stderr){
 			this.save(stdout);	
 		}.bind(this));
 	},
@@ -43,12 +44,12 @@ TemperatureManager.prototype = {
 		var fileName = this.getFilePath();
 		
 		if (!fs.existsSync(fileName))
-			fs.writeFileAsync(fileName, JSON.stringify([]));
+			fs.writeFileSync(fileName, JSON.stringify([]));
 		
-		var result = JSON.parse(fs.readFileAsync(fileName));
+		var result = JSON.parse(fs.readFileSync(fileName));
 		result.push(obj);
 		
-		fs.writeFileAsync(fileName, JSON.stringify(result));
+		fs.writeFileSync(fileName, JSON.stringify(result));
 	},
 	getFileDir: function(){
 		return configManager.get("logDir");
@@ -58,4 +59,4 @@ TemperatureManager.prototype = {
 	}
 };
 
-module.exports = TemperatureManager;
+module.exports = new TemperatureManager();

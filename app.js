@@ -9,6 +9,7 @@ module.exports = function() {
     var express = require('express')
     var app = express()
     var configManager = require("./configManager");
+    var temperatureManager = require("./temperatureManager");
 
     app.use(bodyParser.json()); 
     app.use(bodyParser.urlencoded({ extended: true })); 
@@ -164,6 +165,7 @@ module.exports = function() {
     });
 
     app.listen(3000, function () {
+		temperatureManager.start();		
         console.log('Listening on port 3000!')
     });
 }
