@@ -10,7 +10,7 @@ function TemperatureManager(){
 
 TemperatureManager.prototype = {
 	start: function(){
-		setInterval(this.measure.bind(this), this.seconds * 100);
+		setInterval(this.measure.bind(this), this.seconds * 1000);
 		this.measure();
 	},
 	measure: function(){
