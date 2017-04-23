@@ -5,6 +5,7 @@
         <link href="/public/plugins/bootstrap-3.3.7-dist/css/bootstrap.css" rel="stylesheet" type="text/css" />
         <script src="/public/plugins/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
         <script src="/public/plugins/moment-with-locales.js"></script>
+	<link rel="manifest" href="/public/manifest.json">
 
         <script src="/public/index.js"></script>
         <link href="/public/index.css" rel="stylesheet" type="text/css" />
@@ -19,15 +20,15 @@
                 <span class="label label-danger" id="available-space"></span>
                 <span class="label label-warning" id="total-records"></span>
                 <span class="label label-primary" id="total-hours"></span>
-                <span class="label label-info" id="automaticallyRecord"></span>
-                <span class="label label-default" id="server-date"></span>
+                <span class="label label-info hidden" id="automaticallyRecord"></span>
+                <span class="label label-default hidden" id="server-date"></span>
             </div>            
         </div>
 
         <img id="stream" style="display: none;">
 
         <div class="content">
-            
+		<div class="loading">Carregando...</div>            
         </div>
 
         <div class="bottom">            
@@ -36,7 +37,7 @@
                 <button id="record" class="btn btn-danger"><span class="glyphicon glyphicon-record"></span> <span>Gravar</span></button>
                 <button id="stop" class="btn btn-warning"><span class="glyphicon glyphicon-stop"></span> Pausar</button>            
 
-                <button class="btn btn-info btn-center" id="btn-stream"><span class="glyphicon glyphicon-camera"></span>  Câmera ao vivo</button>                
+                <button class="btn hidden btn-info btn-center" id="btn-stream"><span class="glyphicon glyphicon-camera"></span>  Câmera ao vivo</button>                
                 <button id="shutdown" class="btn btn-danger pull-right"><span class="glyphicon glyphicon-off"></span> Desligar</button>            
             </div>            
         </div>

@@ -3,7 +3,7 @@ var moment = require("moment");
 
 var DateManager = function(){    
     this.dateFormat = "YYYYMMDD";
-    this.timeFormat = "hh:mm:ss";
+    this.timeFormat = "HH:mm:ss";
 }
 
 DateManager.prototype = {

@@ -24,7 +24,8 @@ function App() {
         $totalHours: $("#total-hours"),
         $automaticallyRecord: $("#automaticallyRecord"),
         $serverDate: $("#server-date"),
-        $stream: $("#stream")
+        $stream: $("#stream"),
+	$loading: $(".loading")
     };
 
     this.buttons = {
@@ -181,6 +182,12 @@ App.prototype = {
         else
             this.html.$automaticallyRecord.append($("<span class='glyphicon glyphicon-remove'>"));
     },
+    setLoading: function(loading){
+	if(loading)
+		this.html.$loading.show();
+	else
+		this.html.$loading.hide();
+    },
     startRecording: function(){
         $.ajax({
             method: "POST",
@@ -240,6 +247,7 @@ App.prototype = {
         });
     },
     getRecords: function(date){
+	this.setLoading(true);
         this.clearItems();
         $.ajax({
             method: "POST",
@@ -249,6 +257,7 @@ App.prototype = {
             $(records).each(function(i, record){
                 this.addItem(new Item(record));
             }.bind(this));
+	    this.setLoading(false);
         }.bind(this)).fail(function(){
 
         });
