@@ -4,7 +4,7 @@ var configManager = require("./configManager");
 var path = require("path");
 
 function TemperatureManager(){
-	this.seconds = 60;
+	this.seconds = 300;
 	this.fileName = "temperature.json";
 }
 

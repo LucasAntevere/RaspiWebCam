@@ -139,8 +139,10 @@ App.prototype = {
         this.startRecording();
     },
     onStopClick: function(){
-        if(confirm("Deseja pausar a gravação?"))
+        if(confirm("Deseja pausar a gravação?")){
             this.stop();
+            this.onUpdateClick();
+        }
     },
     onShutdownClick: function(){
         if(confirm("Deseja desligar a câmera? Isso pode demorar até um minuto."))

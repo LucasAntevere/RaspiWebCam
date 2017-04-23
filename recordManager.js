@@ -87,9 +87,11 @@ RecordManager.prototype = {
             w: configManager.get("width"),
             h: configManager.get("height"),
             bitrate: configManager.get("bitrate"),
-            framerate: configManager.get("framerate")
-            
-    //        nopreview: this.ops.nopreview,
+            framerate: configManager.get("framerate"),
+            hflip: configManager.get("hflip"),
+            vflip: configManager.get("vflip"),
+            rotation: configManager.get("rotation"),
+            nopreview: configManager.get("nopreview")
   //          vstab: this.ops.vstab,
 //            log: __dirname
         });
