@@ -5,6 +5,7 @@ var moment = require("moment");
 var diskspace = require("diskspace");
 var path = require("path");
 var configManager = require("./configManager");
+var disk = require('diskusage');
 
 var _instance;
 
@@ -269,9 +270,16 @@ RecordManager.prototype = {
         return json;
     },
     getSpaceInfo: function(callback){
-        diskspace.check(configManager.get("recordPartition"), function(err, total, free, status){			
+        /*diskspace.check(configManager.get("recordPartition"), function(err, total, free, status){			
             callback(total, free);
-        });        
+        });        */
+        disk.check(configManager.get("recordPartition"), function(err, info) {
+            if (err) {
+                console.log(err);
+            } else {
+                callback(info.total, info.free);
+            }
+        });
     },
     setTimeFixed: function(){
         this.timeFixed = true;
