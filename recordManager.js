@@ -142,8 +142,10 @@ RecordManager.prototype = {
             
             var newFilePath = path.join(newFileDir, this.getFileName(obj.startDate, obj.endDate));
             
+		var framerate = configManager.get("framerate");
+
             if(path.extname(filePath) == ".h264"){
-				var mp4Command  ="MP4Box -add " + filePath + " " + newFilePath;
+				var mp4Command  ="MP4Box -add " + filePath + " " + newFilePath + " -fps " + framerate;
 				  
 				this.log("Início da conversão do arquivo. (" + mp4Command + ")");
 				shell.exec(mp4Command, { silent: false }, 
