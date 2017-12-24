@@ -348,8 +348,23 @@ Item.prototype = {
     getTitle: function(){
         var date = new Date(this.data.date);
 
-        return moment(this.data.startDate).format("ddd [<b>]HH:mm[</b>]:ss") + " - " +
-               moment(this.data.endDate).format("ddd [<b>]HH:mm[</b>]:ss");
+        var content = $("<div>");
+
+        var dateFormat = " HH:mm ";
+
+        var d = $("<span class='time-content'>");         
+        d.append("<i class='material-icons'>date_range</i>");        
+        d.append(moment(this.data.startDate).format("ddd DD, MMM"));
+        
+        var time = $("<span class='time-content pull-right'>");
+        time.append("<i class='material-icons'>access_time</i>");        
+        time.append(moment(this.data.startDate).format(dateFormat));
+        time.append("–");
+        time.append(moment(this.data.endDate).format(dateFormat));
+
+        content.append(d);
+        content.append(time);
+        return  content;
     },
     toggle: function(){
         if (this.isOpened())

@@ -13,6 +13,7 @@ body {
     border-bottom: 1px solid #ababab;
     background: #696969;
     color: #e8e8e8;    
+    
 }
 
 .content .item h1 { 
@@ -75,4 +76,28 @@ img#stream {
 	text-align: center;
 	margin-top: 20px;
 	font-size: 20px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn .material-icons {
+    margin-right: 5px;
+}
+
+.form-control {
+    height: 38px;
+}
+
+.time-content {
+    display: inline-flex;
+    align-items: center;
+}
+
+.time-content .material-icons{
+    margin-right: 5px;
+    margin-left: 5px;
+    color: #80CBC4;
 }
